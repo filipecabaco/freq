@@ -20,6 +20,7 @@ object Global extends App{
   val output = "Destination %s with Id %d:"
   println(s"Started with ids $ids" )
   executeWithFuture
+
   /**
   * Executes the word search wrapped in a Future
   */
@@ -27,8 +28,8 @@ object Global extends App{
     val futures = ids.map{id=>Future(Tools.getDestInfo(id))}
     futures.map( _ onComplete{
       case Success(dest) => {
-       val res = getOrderedWordCount(Tools.getAllHotelDescriptions(dest).mkString)
-       if(res.length > 0){ showOutput(dest,res) }
+        val res = getOrderedWordCount(Tools.getAllHotelDescriptions(dest).mkString)
+        if(res.length > 0){ showOutput(dest,res) }
       }
       case Failure (t) => println("Error thrown - %s".format(t.getClass().getSimpleName()))
     })
