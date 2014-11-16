@@ -16,25 +16,38 @@ case class Destination(name:String,id:Int)
 object Global extends App{
 
   val ids = args.toList
+  val pttr = "[a-zA-Z]+"
+  val output = "Destination %s with Id %d:"
   println(s"Started with ids $ids" )
-  execute
+  executeWithFuture
 
-  def execute = {
-    val futures = ids.map{d=>Future(Tools.getDestInfo(d))}
+  def executeWithFuture = {
+    val futures = ids.map{id=>Future(Tools.getDestInfo(id))}
     futures.map( _ onComplete{
-      case Success(dest) => showWordCount(dest,Tools.getAllHotelDescriptions(dest).mkString)
+      case Success(dest) => {
+        val res = showWordCount(Tools.getAllHotelDescriptions(dest))
+        showOutput(dest,res)
+      }
       case Failure (t) => println("Error thrown - %s".format(t.getClass().getSimpleName()))
       })
   }
 
-  private def showWordCount(dest:Destination,text : String){
-    val words = new Regex("[a-zA-Z]+","g") findAllIn text
+  private def showWordCount(descritpions : List[String]) : Seq[(String,Int)] = {
+    val words = new Regex(pttr,"g") findAllIn descritpions.mkString
     var res = collection.mutable.Map[String,Int]().withDefaultValue(0)
+
     for(w<- words) {
       res.update(w,(res(w)+1))
     }
-    println("Destination %s with Id %d:",dest.name,dest.id)
-    res.toSeq.sortBy(_._2).reverse.foreach(t=>println(t._1 + " :"+t._2))
+    res.toSeq.sortBy(_._2).reverse.toSeq
+  }
+
+  private def showOutput(dest:Destination,seq:Seq[(String,Int)]){
+    //To ensure the output is shown correctly
+    this.synchronized {
+      println(output.format(dest.name,dest.id))
+      seq.foreach(t=>println(t._1 + " :"+t._2))
+    }
   }
 }
 
